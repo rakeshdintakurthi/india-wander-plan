@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { StepIndicator } from "@/components/StepIndicator";
 import { StateSelection } from "@/components/StateSelection";
@@ -9,6 +11,7 @@ import { PlacesToVisit } from "@/components/PlacesToVisit";
 import { TripSchedule } from "@/components/TripSchedule";
 import { HistoryAndCulture } from "@/components/HistoryAndCulture";
 import { State, City, PreferenceType } from "@/data/tourismData";
+import { User, Session } from "@supabase/supabase-js";
 
 type Step = 'state' | 'city' | 'preference' | 'recommendation' | 'places' | 'schedule' | 'history';
 
@@ -33,11 +36,52 @@ const stepToNumber: Record<Step, number> = {
 };
 
 export default function Index() {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
   const [step, setStep] = useState<Step>('state');
   const [selectedState, setSelectedState] = useState<State | null>(null);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [selectedPreferences, setSelectedPreferences] = useState<PreferenceType[]>([]);
   const [recommendedCity, setRecommendedCity] = useState<City | null>(null);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        if (!session?.user) {
+          navigate("/auth");
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+      if (!session?.user) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handleStateSelect = (state: State) => {
     setSelectedState(state);

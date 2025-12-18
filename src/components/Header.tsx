@@ -1,6 +1,16 @@
-import { Compass, MapPin } from "lucide-react";
+import { Compass, MapPin, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function Header() {
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({ title: "Signed out", description: "See you next time!" });
+  };
+
   return (
     <header className="w-full py-4 px-6 bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -16,11 +26,22 @@ export function Header() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full">
-          <MapPin className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-secondary-foreground">
-            AI-Powered
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full">
+            <MapPin className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-secondary-foreground">
+              AI-Powered
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </div>
     </header>
